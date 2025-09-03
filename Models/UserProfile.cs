@@ -4,11 +4,7 @@ namespace PscTechBackend.Models
 {
     public class UserProfile
     {
-        [Required]
-        public Guid Id { get; set; } = Guid.NewGuid();
-        
-        [Required]
-        public Guid UserId { get; set; }
+        public int Id { get; set; }
         
         [Required]
         [MaxLength(100)]
@@ -18,20 +14,13 @@ namespace PscTechBackend.Models
         [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
         
+        [MaxLength(100)]
+        public string? Email { get; set; }
+        
         [MaxLength(20)]
         public string? Phone { get; set; }
         
-        [MaxLength(500)]
-        public string? Address { get; set; }
-        
-        [MaxLength(500)]
-        public string? ProfilePicture { get; set; }
-        
-        [MaxLength(500)]
-        public string? Preferences { get; set; }
-        
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }
