@@ -46,9 +46,9 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Add Entity Framework
+// Add Entity Framework with PostgreSQL
 builder.Services.AddDbContext<PscTechDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -78,7 +78,14 @@ var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<PscTechDbContext>();
-    db.Database.Migrate();
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Migration error: {ex.Message}");
+    }
 }
 
 // Configure the HTTP request pipeline.
@@ -99,7 +106,7 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowAll");
 
-// Add JWT middleware - FIXED: Use the correct method
+// Add JWT middleware
 app.UseMiddleware<JwtMiddleware>();
 
 // Health check endpoint
