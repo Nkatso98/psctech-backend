@@ -12,11 +12,7 @@ namespace PscTechBackend.Data
         public DbSet<Institution> Institutions { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Teacher> Teachers { get; set; }
-        public DbSet<Student> Students { get; set; }
         public DbSet<Voucher> Vouchers { get; set; }
-        public DbSet<StudyResult> StudyResults { get; set; }
-        public DbSet<UserProfile> UserProfiles { get; set; }
-        public DbSet<VoucherAudit> VoucherAudits { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -61,19 +57,6 @@ namespace PscTechBackend.Data
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
 
-            // Configure Student
-            modelBuilder.Entity<Student>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Grade).HasMaxLength(20);
-                entity.Property(e => e.Email).HasMaxLength(100);
-                entity.Property(e => e.Phone).HasMaxLength(20);
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
             // Configure Voucher
             modelBuilder.Entity<Voucher>(entity =>
             {
@@ -83,37 +66,6 @@ namespace PscTechBackend.Data
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
                 entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            // Configure StudyResult
-            modelBuilder.Entity<StudyResult>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Subject).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Grade).HasMaxLength(10);
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            // Configure UserProfile
-            modelBuilder.Entity<UserProfile>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.FirstName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.LastName).IsRequired().HasMaxLength(100);
-                entity.Property(e => e.Email).HasMaxLength(100);
-                entity.Property(e => e.Phone).HasMaxLength(20);
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            });
-
-            // Configure VoucherAudit
-            modelBuilder.Entity<VoucherAudit>(entity =>
-            {
-                entity.HasKey(e => e.Id);
-                entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
-                entity.Property(e => e.Details).HasMaxLength(500);
-                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
         }
     }
