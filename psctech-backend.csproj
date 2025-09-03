@@ -132,13 +132,4 @@
     <Content Remove="zh-Hant\**\*" />
   </ItemGroup>
 
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="npm --version" ContinueOnError="true" IgnoreExitCode="true" />
-    <Exec Command="npm install --production" ContinueOnError="true" IgnoreExitCode="true" />
-  </Target>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo Build completed successfully!" />
-  </Target>
-
 </Project>
