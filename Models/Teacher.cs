@@ -4,35 +4,13 @@ namespace PscTechBackend.Models
 {
     public class Teacher
     {
-        public Guid Id { get; set; }
-        
+        public int Id { get; set; }
         [Required]
-        [MaxLength(50)]
-        public string EmployeeNumber { get; set; } = string.Empty;
-        
-        [Required]
-        [MaxLength(100)]
         public string FirstName { get; set; } = string.Empty;
-        
         [Required]
-        [MaxLength(100)]
         public string LastName { get; set; } = string.Empty;
-        
-        [MaxLength(255)]
-        public string FullName => $"{FirstName} {LastName}".Trim();
-        
-        [Required]
-        [MaxLength(100)]
-        public string Subject { get; set; } = string.Empty;
-        
-        [Required]
-        [MaxLength(50)]
-        public string InstitutionId { get; set; } = string.Empty;
-        
-        public bool IsActive { get; set; } = true;
-        
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public string? Subject { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }
