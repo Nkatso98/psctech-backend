@@ -99,8 +99,8 @@ app.UseStaticFiles();
 app.UseRouting();
 app.UseCors("AllowAll");
 
-// Add JWT middleware
-app.UseJwtMiddleware();
+// Add JWT middleware - FIXED: Use the correct method
+app.UseMiddleware<JwtMiddleware>();
 
 // Health check endpoint
 app.MapHealthChecks("/health");
@@ -189,5 +189,3 @@ app.MapGet("/", () => Results.Ok(new {
 }));
 
 app.Run();
-
-
