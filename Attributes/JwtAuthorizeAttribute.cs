@@ -9,5 +9,18 @@ namespace PscTechBackend.Attributes
         {
             AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme;
         }
+
+        public JwtAuthorizeAttribute(string policy)
+        {
+            Policy = policy;
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme;
+        }
+
+        public JwtAuthorizeAttribute(string policy, string roles)
+        {
+            Policy = policy;
+            Roles = roles;
+            AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme;
+        }
     }
 }
