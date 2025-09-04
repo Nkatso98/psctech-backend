@@ -14,7 +14,6 @@
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
     <EnableDefaultContentItems>true</EnableDefaultContentItems>
-    <!-- Completely disable all deployment and publish features -->
     <DeployOnBuild>false</DeployOnBuild>
     <PublishProfile>false</PublishProfile>
     <WebPublishMethod>false</WebPublishMethod>
@@ -56,7 +55,6 @@
     <Folder Include="Middleware\" />
   </ItemGroup>
 
-  <!-- Exclude ALL Node.js, superadmin dashboard, and Firebase files -->
   <ItemGroup>
     <Content Remove="api\**\*" />
     <Content Remove="config\**\*" />
@@ -67,7 +65,6 @@
     <Content Remove="deploy.zip" />
     <Content Remove="*.log" />
     <Content Remove="test\**\*" />
-    <!-- Exclude superadmin dashboard and Firebase files -->
     <Content Remove="firebase\**\*" />
     <Content Remove="superadmin-dashboard\**\*" />
     <Content Remove="vouchers\**\*" />
@@ -82,7 +79,6 @@
     <Content Remove="*.user" />
     <Content Remove="*.sln" />
     <Content Remove="env-validator.js" />
-    <!-- Exclude language directories and other Firebase artifacts -->
     <Content Remove="af\**\*" />
     <Content Remove="ar\**\*" />
     <Content Remove="az\**\*" />
@@ -135,7 +131,6 @@
     <Content Remove="zh-Hant\**\*" />
   </ItemGroup>
 
-  <!-- Build Events - Made npm install optional -->
   <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Release'">
     <Exec Command="npm --version" ContinueOnError="true" IgnoreExitCode="true" />
     <Exec Command="npm install --production" ContinueOnError="true" IgnoreExitCode="true" />
