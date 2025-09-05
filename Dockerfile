@@ -1,23 +1,23 @@
+# Runtime image
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://0.0.0.0:8080
 
+# Build image
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# 1) Copy the project file exactly where it lives
-COPY backend/psctech-backend.csproj backend/
+# Copy entire backend into the image (avoids path issues)
+COPY backend/ ./backend/
 
-# 2) Restore using the project path
-RUN dotnet restore "backend/psctech-backend.csproj"
-
-# 3) Copy the full source and publish from inside backend
-COPY . .
+# Restore, build, and publish from inside backend
 WORKDIR /src/backend
-RUN dotnet publish "psctech-backend.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet restore
+RUN dotnet publish -c Release -o /app/publish /p:UseAppHost=false
 
+# Final runtime image
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "psctech-backend.dll"]
+ENTRYPOINT ["dotnet","psctech-backend.dll"]
