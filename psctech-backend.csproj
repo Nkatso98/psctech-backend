@@ -78,5 +78,10 @@
     <Content Remove="*.user" />
     <Content Remove="*.sln" />
     <Content Remove="env-validator.js" />
+    <Compile Remove="Controllers\AuthController.cs" />
+    <Compile Remove="Controllers\InstitutionController.cs" />
+    <Compile Remove="Controllers\StudyController.cs" />
+    <Compile Remove="Controllers\VoucherController.cs" />
+    <Compile Remove="Controllers\SubscriptionController.cs" />
   </ItemGroup>
 </Project>
