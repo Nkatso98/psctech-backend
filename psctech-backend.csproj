@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
@@ -79,65 +78,5 @@
     <Content Remove="*.user" />
     <Content Remove="*.sln" />
     <Content Remove="env-validator.js" />
-    <Content Remove="af\**\*" />
-    <Content Remove="ar\**\*" />
-    <Content Remove="az\**\*" />
-    <Content Remove="bg\**\*" />
-    <Content Remove="bn-BD\**\*" />
-    <Content Remove="cs\**\*" />
-    <Content Remove="da\**\*" />
-    <Content Remove="de\**\*" />
-    <Content Remove="el\**\*" />
-    <Content Remove="es\**\*" />
-    <Content Remove="fa\**\*" />
-    <Content Remove="fi-FI\**\*" />
-    <Content Remove="fr\**\*" />
-    <Content Remove="fr-BE\**\*" />
-    <Content Remove="he\**\*" />
-    <Content Remove="hr\**\*" />
-    <Content Remove="hu\**\*" />
-    <Content Remove="hy\**\*" />
-    <Content Remove="id\**\*" />
-    <Content Remove="is\**\*" />
-    <Content Remove="it\**\*" />
-    <Content Remove="ja\**\*" />
-    <Content Remove="ko\**\*" />
-    <Content Remove="ko-KR\**\*" />
-    <Content Remove="ku\**\*" />
-    <Content Remove="lv\**\*" />
-    <Content Remove="ms-MY\**\*" />
-    <Content Remove="mt\**\*" />
-    <Content Remove="nb\**\*" />
-    <Content Remove="nb-NO\**\*" />
-    <Content Remove="nl\**\*" />
-    <Content Remove="pl\**\*" />
-    <Content Remove="pt\**\*" />
-    <Content Remove="pt-BR\**\*" />
-    <Content Remove="ro\**\*" />
-    <Content Remove="ru\**\*" />
-    <Content Remove="sk\**\*" />
-    <Content Remove="sl\**\*" />
-    <Content Remove="sr\**\*" />
-    <Content Remove="sr-Latn\**\*" />
-    <Content Remove="sv\**\*" />
-    <Content Remove="th-TH\**\*" />
-    <Content Remove="tr\**\*" />
-    <Content Remove="uk\**\*" />
-    <Content Remove="uz-Cyrl-UZ\**\*" />
-    <Content Remove="uz-Latn-UZ\**\*" />
-    <Content Remove="vi\**\*" />
-    <Content Remove="zh-CN\**\*" />
-    <Content Remove="zh-Hans\**\*" />
-    <Content Remove="zh-Hant\**\*" />
   </ItemGroup>
-
-  <Target Name="PreBuild" BeforeTargets="PreBuildEvent" Condition="'$(Configuration)' == 'Release'">
-    <Exec Command="npm --version" ContinueOnError="true" IgnoreExitCode="true" />
-    <Exec Command="npm install --production" ContinueOnError="true" IgnoreExitCode="true" />
-  </Target>
-
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="echo Build completed successfully!" />
-  </Target>
-
 </Project>
