@@ -44,10 +44,5 @@
     <Folder Include="Middleware\" />
   </ItemGroup>
 
-  <!-- TEMP: exclude controllers that reference fields missing from your current models -->
-  <ItemGroup>
-    <Compile Remove="Controllers\AuthController.cs" />
-    <Compile Remove="Controllers\InstitutionController.cs" />
-    <Compile Remove="Controllers\StudyController.cs" />
-  </ItemGroup>
+  <!-- Ensure all controllers are included for Swagger discovery -->
 </Project>
