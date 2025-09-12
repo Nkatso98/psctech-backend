@@ -1,0 +1,46 @@
+/* =====================================================
+   PSC Tech - Essential Mobile Responsiveness Only
+   Keeping Original UI, Adding Minimal Mobile Behavior
+   ===================================================== */
+
+/* Essential mobile responsive utilities only */
+@media (max-width: 768px) {
+  /* Mobile grid adjustments */
+  .dashboard-stats {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+  
+  /* Mobile sidebar behavior */
+  .sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -100% !important;
+    width: 280px !important;
+    height: 100vh !important;
+    z-index: 1000 !important;
+    transition: left 0.3s ease-in-out !important;
+  }
+  
+  .sidebar.open {
+    left: 0 !important;
+  }
+  
+  /* Mobile table scrolling */
+  .table-container {
+    overflow-x: auto !important;
+  }
+  
+  /* Mobile button sizing */
+  .btn {
+    width: 100% !important;
+    margin-bottom: 0.5rem !important;
+  }
+  
+  /* Mobile form adjustments */
+  .form-control {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
+/* Keep everything else exactly as it was */

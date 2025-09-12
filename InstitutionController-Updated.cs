@@ -1,0 +1,231 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.ComponentModel.DataAnnotations;
+
+namespace PSC.API.Controllers
+{
+    [ApiController]
+    [Route("api/[controller]")]
+    public class InstitutionController : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public InstitutionController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // DTOs with proper validation
+        public class InstitutionRegistrationRequest
+        {
+            [Required(ErrorMessage = "School name is required")]
+            [StringLength(255, ErrorMessage = "School name cannot exceed 255 characters")]
+            public string SchoolName { get; set; }
+
+            [Required(ErrorMessage = "Principal name is required")]
+            [StringLength(255, ErrorMessage = "Principal name cannot exceed 255 characters")]
+            public string PrincipalName { get; set; }
+
+            [Required(ErrorMessage = "Email is required")]
+            [EmailAddress(ErrorMessage = "Invalid email format")]
+            [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
+            public string Email { get; set; }
+
+            [Required(ErrorMessage = "Phone number is required")]
+            [Phone(ErrorMessage = "Invalid phone number format")]
+            [StringLength(20, ErrorMessage = "Phone number cannot exceed 20 characters")]
+            public string Phone { get; set; }
+
+            [Required(ErrorMessage = "Address is required")]
+            [StringLength(500, ErrorMessage = "Address cannot exceed 500 characters")]
+            public string Address { get; set; }
+
+            [Required(ErrorMessage = "School type is required")]
+            [RegularExpression("^(Primary School|Secondary School|University|College|Technical Institute|Vocational School)$", 
+                ErrorMessage = "School type must be: Primary School, Secondary School, University, College, Technical Institute, or Vocational School")]
+            public string SchoolType { get; set; }
+
+            [Required(ErrorMessage = "Username is required")]
+            [StringLength(50, ErrorMessage = "Username cannot exceed 50 characters")]
+            public string Username { get; set; }
+
+            [Required(ErrorMessage = "Password is required")]
+            [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be between 6 and 100 characters")]
+            public string Password { get; set; }
+        }
+
+        public class InstitutionResponse
+        {
+            public string Id { get; set; }
+            public string Name { get; set; }
+            public string Type { get; set; }
+            public string PrincipalName { get; set; }
+            public string Email { get; set; }
+            public string Phone { get; set; }
+            public string Address { get; set; }
+            public string Status { get; set; }
+            public DateTime CreatedAt { get; set; }
+        }
+
+        [HttpPost("register")]
+        public async Task<ActionResult<ApiResponse<InstitutionResponse>>> Register([FromBody] InstitutionRegistrationRequest request)
+        {
+            try
+            {
+                // Validate school type against allowed values
+                var allowedTypes = new[] { "Primary School", "Secondary School", "University", "College", "Technical Institute", "Vocational School" };
+                if (!allowedTypes.Contains(request.SchoolType))
+                {
+                    return BadRequest(new ApiResponse<InstitutionResponse>
+                    {
+                        Success = false,
+                        Message = $"Invalid school type. Must be one of: {string.Join(", ", allowedTypes)}",
+                        Data = null
+                    });
+                }
+
+                // Check if email already exists
+                if (await _context.Institutions.AnyAsync(i => i.Email == request.Email))
+                {
+                    return BadRequest(new ApiResponse<InstitutionResponse>
+                    {
+                        Success = false,
+                        Message = "An institution with this email already exists",
+                        Data = null
+                    });
+                }
+
+                // Check if username already exists
+                if (await _context.Users.AnyAsync(u => u.Username == request.Username))
+                {
+                    return BadRequest(new ApiResponse<InstitutionResponse>
+                    {
+                        Success = false,
+                        Message = "Username already taken",
+                        Data = null
+                    });
+                }
+
+                // Create institution
+                var institution = new Institution
+                {
+                    Id = Guid.NewGuid(),
+                    Name = request.SchoolName,
+                    Type = request.SchoolType, // This now matches the CHECK constraint
+                    PrincipalName = request.PrincipalName,
+                    Email = request.Email,
+                    Phone = request.Phone,
+                    Address = request.Address,
+                    Status = "Active",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Institutions.Add(institution);
+
+                // Create user account
+                var user = new User
+                {
+                    Id = Guid.NewGuid(),
+                    InstitutionId = institution.Id.ToString(),
+                    Username = request.Username,
+                    Email = request.Email,
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                    FirstName = request.PrincipalName.Split(' ')[0],
+                    LastName = request.PrincipalName.Split(' ').Length > 1 ? string.Join(" ", request.PrincipalName.Split(' ').Skip(1)) : "",
+                    Role = "Admin",
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                _context.Users.Add(user);
+
+                await _context.SaveChangesAsync();
+
+                var response = new InstitutionResponse
+                {
+                    Id = institution.Id.ToString(),
+                    Name = institution.Name,
+                    Type = institution.Type,
+                    PrincipalName = institution.PrincipalName,
+                    Email = institution.Email,
+                    Phone = institution.Phone,
+                    Address = institution.Address,
+                    Status = institution.Status,
+                    CreatedAt = institution.CreatedAt
+                };
+
+                return Ok(new ApiResponse<InstitutionResponse>
+                {
+                    Success = true,
+                    Message = "Institution registered successfully",
+                    Data = response
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new ApiResponse<InstitutionResponse>
+                {
+                    Success = false,
+                    Message = "An error occurred while registering the institution",
+                    Data = null,
+                    Error = ex.Message
+                });
+            }
+        }
+    }
+
+    // Helper classes
+    public class Institution
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; }
+        public string Type { get; set; }
+        public string PrincipalName { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string Address { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string Country { get; set; }
+        public string PostalCode { get; set; }
+        public string Website { get; set; }
+        public string LogoUrl { get; set; }
+        public string Status { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class User
+    {
+        public Guid Id { get; set; }
+        public string InstitutionId { get; set; }
+        public string Username { get; set; }
+        public string Email { get; set; }
+        public string PasswordHash { get; set; }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public string Role { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+
+    public class ApiResponse<T>
+    {
+        public bool Success { get; set; }
+        public T Data { get; set; }
+        public string Message { get; set; }
+        public string Error { get; set; }
+    }
+}
+
+
+
+
+
+
+
+
+

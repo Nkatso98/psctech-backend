@@ -1,0 +1,33 @@
+# Render Blueprint to deploy PSC Tech Backend from render-clean subfolder
+
+services:
+  - type: web
+    name: psctech-backend
+    env: docker
+    rootDir: render-clean
+    plan: free
+    autoDeploy: true
+    dockerfilePath: render-clean/Dockerfile
+    healthCheckPath: /api/health
+    # If you prefer non-Docker build, switch env to "docker" -> "node" and set build/start instead.
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:${PORT}
+      - key: ConnectionStrings__DefaultConnection
+        sync: false  # Set in Render dashboard: e.g. Host=...;Port=5432;Database=...;Username=...;Password=...;SSL Mode=Require;Trust Server Certificate=true
+      - key: Jwt__Key
+        sync: false  # Set a secure JWT secret in dashboard
+      - key: Jwt__Issuer
+        value: PscTechBackend
+      - key: Jwt__Audience
+        value: PscTechFrontend
+      - key: Security__CorsOrigins__0
+        value: https://psctech-2f998.web.app
+      - key: Security__CorsOrigins__1
+        value: https://psctech-2f998.firebaseapp.com
+      - key: Security__CorsOrigins__2
+        value: http://localhost:3000
+
+

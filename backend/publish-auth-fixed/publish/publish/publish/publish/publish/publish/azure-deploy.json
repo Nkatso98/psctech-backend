@@ -1,0 +1,37 @@
+{
+  "version": "1.0.0",
+  "name": "PSC Tech Backend",
+  "description": "Backend server for PSC Tech School Management Portal",
+  "target": "Azure App Service",
+  "appService": {
+    "name": "psctech-bcdadbajcrgwa2h5",
+    "resourceGroup": "psc-tech-rg",
+    "location": "South Africa North",
+    "runtime": "node",
+    "version": "18.0.0"
+  },
+  "deployment": {
+    "type": "zip",
+    "source": ".",
+    "exclude": [
+      "node_modules/**",
+      ".git/**",
+      "*.log",
+      "deploy.zip"
+    ],
+    "include": [
+      "api/**",
+      "config/**",
+      "package.json",
+      "package-lock.json",
+      "web.config",
+      ".env"
+    ]
+  },
+  "environment": {
+    "NODE_ENV": "production",
+    "PORT": "8080"
+  }
+}
+
+

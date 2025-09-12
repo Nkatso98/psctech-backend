@@ -1,0 +1,28 @@
+{
+  "name": "psctech-backend",
+  "description": "PSCTECH Backend API - Professional voucher system for multi-tenant platform",
+  "repository": "https://github.com/your-username/psctech-backend",
+  "logo": "https://node-js-sample.herokuapp.com/node.png",
+  "keywords": ["dotnet", "api", "voucher-system", "multi-tenant"],
+  "stack": "heroku-22",
+  "buildpacks": [
+    {
+      "url": "https://github.com/jincod/dotnetcore-buildpack"
+    }
+  ],
+  "env": {
+    "ASPNETCORE_ENVIRONMENT": {
+      "description": "Environment for the application",
+      "value": "Production"
+    },
+    "ASPNETCORE_URLS": {
+      "description": "URLs for the application",
+      "value": "http://0.0.0.0:$PORT"
+    }
+  }
+}
+
+
+
+
+

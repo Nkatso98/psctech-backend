@@ -1,0 +1,374 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'PSCTECH Backend - AWS Elastic Beanstalk with Route 53 and SSL Certificate'
+
+Parameters:
+  Environment:
+    Type: String
+    Default: 'production'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: 'Environment name'
+  
+  DomainName:
+    Type: String
+    Default: 'psctech.com'
+    Description: 'Main domain name (without www or api subdomain)'
+  
+  ApiSubdomain:
+    Type: String
+    Default: 'api'
+    Description: 'API subdomain prefix'
+  
+  CertificateEmail:
+    Type: String
+    Default: 'admin@psctech.com'
+    Description: 'Email for SSL certificate notifications'
+
+Resources:
+  # VPC for the backend
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-vpc'
+
+  # Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-igw'
+
+  # Attach Internet Gateway to VPC
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref InternetGateway
+      VpcId: !Ref VPC
+
+  # Public Subnets
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-public-subnet-1'
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: 10.0.2.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-public-subnet-2'
+
+  # Route Table for Public Subnets
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-public-routes'
+
+  # Route to Internet Gateway
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: InternetGatewayAttachment
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  # Associate Public Subnets with Route Table
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  # Security Group for Elastic Beanstalk
+  ElasticBeanstalkSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for PSCTECH Elastic Beanstalk
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-eb-sg'
+
+  # Route 53 Hosted Zone
+  Route53HostedZone:
+    Type: AWS::Route53::HostedZone
+    Properties:
+      Name: !Ref DomainName
+      HostedZoneConfig:
+        Comment: !Sub 'Hosted zone for ${DomainName}'
+
+  # SSL Certificate
+  SSLCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Ref DomainName
+      SubjectAlternativeNames:
+        - !Sub '*.${DomainName}'
+        - !Sub '${ApiSubdomain}.${DomainName}'
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !Ref DomainName
+          HostedZoneId: !Ref Route53HostedZone
+        - DomainName: !Sub '*.${DomainName}'
+          HostedZoneId: !Ref Route53HostedZone
+        - DomainName: !Sub '${ApiSubdomain}.${DomainName}'
+          HostedZoneId: !Ref Route53HostedZone
+
+  # IAM Role for Elastic Beanstalk
+  ElasticBeanstalkServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${Environment}-psctech-eb-service-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: elasticbeanstalk.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSElasticBeanstalkService
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkWebTier
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkMulticontainerDocker
+        - arn:aws:iam::aws:policy/AWSElasticBeanstalkWorkerTier
+
+  # IAM Instance Profile for EC2 instances
+  ElasticBeanstalkInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: !Sub '${Environment}-psctech-eb-instance-profile'
+      Roles:
+        - !Ref ElasticBeanstalkServiceRole
+
+  # Elastic Beanstalk Application
+  ElasticBeanstalkApplication:
+    Type: AWS::ElasticBeanstalk::Application
+    Properties:
+      ApplicationName: !Sub '${Environment}-psctech-backend'
+      Description: 'PSCTECH Backend API - Multi-tenant Educational Platform'
+
+  # Elastic Beanstalk Environment
+  ElasticBeanstalkEnvironment:
+    Type: AWS::ElasticBeanstalk::Environment
+    DependsOn: SSLCertificate
+    Properties:
+      ApplicationName: !Ref ElasticBeanstalkApplication
+      EnvironmentName: !Sub '${Environment}-psctech-backend-env'
+      Description: !Sub 'PSCTECH Backend Environment - ${Environment}'
+      SolutionStackName: '64bit Amazon Linux 2 v5.8.0 running .NET Core on 64bit Amazon Linux 2'
+      PlatformArn: 'arn:aws:elasticbeanstalk:eu-north-1::platform/.NET Core on Linux/2.2.0'
+      OptionSettings:
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: IamInstanceProfile
+          Value: !Ref ElasticBeanstalkInstanceProfile
+        - Namespace: aws:autoscaling:launchconfiguration
+          OptionName: SecurityGroups
+          Value: !Ref ElasticBeanstalkSecurityGroup
+        - Namespace: aws:ec2:instances
+          OptionName: InstanceTypes
+          Value: t3.small
+        - Namespace: aws:autoscaling:asg
+          OptionName: MinSize
+          Value: '1'
+        - Namespace: aws:autoscaling:asg
+          OptionName: MaxSize
+          Value: '4'
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: EnvironmentType
+          Value: LoadBalanced
+        - Namespace: aws:elasticbeanstalk:environment
+          OptionName: LoadBalancerType
+          Value: application
+        - Namespace: aws:autoscaling:trigger
+          OptionName: BreachDuration
+          Value: '5'
+        - Namespace: aws:autoscaling:trigger
+          OptionName: LowerBreachScaleIncrement
+          Value: '-1'
+        - Namespace: aws:autoscaling:trigger
+          OptionName: UpperBreachScaleIncrement
+          Value: '1'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: ASPNETCORE_ENVIRONMENT
+          Value: !Ref Environment
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: ASPNETCORE_URLS
+          Value: 'http://+:80'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: ConnectionStrings__MasterDatabase
+          Value: !Sub 'Server=psctech-sql.c7uk4kuu8et5.eu-north-1.rds.amazonaws.com,1433;Database=psctech_master;User Id=psctechadmin;Password=Rluthando123;TrustServerCertificate=true;'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: ConnectionStrings__DefaultConnection
+          Value: !Sub 'Server=psctech-sql.c7uk4kuu8et5.eu-north-1.rds.amazonaws.com,1433;Database=psctech_tenant_DEMO001;User Id=psctechadmin;Password=Rluthando123;TrustServerCertificate=true;'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: Security__JwtSecret
+          Value: 'psctech-jwt-secret-key-2024-aws-production'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: Security__CorsOrigins
+          Value: 'https://psctech-2f998.web.app,https://psctech-2f998.firebaseapp.com'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: VoucherSystem__DefaultInstitution
+          Value: 'DEMO001'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Principal__Email
+          Value: 'principal@demoschool.com'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Principal__Password
+          Value: 'password123'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Teacher__Email
+          Value: 'teacher@demoschool.com'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Teacher__Password
+          Value: 'password123'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Parent__Email
+          Value: 'parent@demoschool.com'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Parent__Password
+          Value: 'password123'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Learner__Email
+          Value: 'learner@demoschool.com'
+        - Namespace: aws:elasticbeanstalk:application:environment
+          OptionName: DemoCredentials__Learner__Password
+          Value: 'password123'
+      VpcId: !Ref VPC
+      Subnets: !Join
+        - ','
+        - - !Ref PublicSubnet1
+          - !Ref PublicSubnet2
+
+  # Route 53 A Record for API subdomain
+  Route53ApiRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Route53HostedZone
+      Name: !Sub '${ApiSubdomain}.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !GetAtt ElasticBeanstalkEnvironment.CNAME
+
+  # Route 53 A Record for www subdomain (optional)
+  Route53WWWRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref Route53HostedZone
+      Name: !Sub 'www.${DomainName}'
+      Type: CNAME
+      TTL: '300'
+      ResourceRecords:
+        - !Ref DomainName
+
+  # CloudWatch Log Group
+  CloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/elasticbeanstalk/${Environment}-psctech-backend-env'
+      RetentionInDays: 30
+
+  # S3 Bucket for Elastic Beanstalk artifacts
+  ElasticBeanstalkS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${Environment}-psctech-backend-artifacts-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${Environment}-psctech-backend-artifacts'
+
+Outputs:
+  VPCId:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: !Sub '${Environment}-psctech-vpc-id'
+
+  ElasticBeanstalkEnvironmentURL:
+    Description: Elastic Beanstalk Environment URL
+    Value: !Sub 'http://${ElasticBeanstalkEnvironment.CNAME}'
+    Export:
+      Name: !Sub '${Environment}-psctech-eb-url'
+
+  ApiDomainName:
+    Description: API Domain Name
+    Value: !Sub 'https://${ApiSubdomain}.${DomainName}'
+    Export:
+      Name: !Sub '${Environment}-psctech-api-domain'
+
+  SSLCertificateArn:
+    Description: SSL Certificate ARN
+    Value: !Ref SSLCertificate
+    Export:
+      Name: !Sub '${Environment}-psctech-ssl-cert'
+
+  Route53HostedZoneId:
+    Description: Route 53 Hosted Zone ID
+    Value: !Ref Route53HostedZone
+    Export:
+      Name: !Sub '${Environment}-psctech-hosted-zone'
+
+  ElasticBeanstalkApplicationName:
+    Description: Elastic Beanstalk Application Name
+    Value: !Ref ElasticBeanstalkApplication
+    Export:
+      Name: !Sub '${Environment}-psctech-eb-app'
+
+  ElasticBeanstalkEnvironmentName:
+    Description: Elastic Beanstalk Environment Name
+    Value: !Ref ElasticBeanstalkEnvironment
+    Export:
+      Name: !Sub '${Environment}-psctech-eb-env'
+
+
+
+
+
+
+
+
