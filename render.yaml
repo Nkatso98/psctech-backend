@@ -7,7 +7,7 @@ services:
     rootDir: render-clean
     plan: free
     autoDeploy: true
-    dockerfilePath: render-clean/Dockerfile
+    dockerfilePath: Dockerfile
     healthCheckPath: /api/health
     # If you prefer non-Docker build, switch env to "docker" -> "node" and set build/start instead.
     envVars:
@@ -29,5 +29,6 @@ services:
         value: https://psctech-2f998.firebaseapp.com
       - key: Security__CorsOrigins__2
         value: http://localhost:3000
+
 
 
